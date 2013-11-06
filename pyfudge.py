@@ -22,8 +22,6 @@ can't handle nested loops properly, yet. Will work on that.
 
 from __future__ import print_function
 
-from testprogs import GETIN
-
 #===============================================================================
 # THE BRAINFUCK INTERPRETER
 #===============================================================================
