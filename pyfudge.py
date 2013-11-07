@@ -1,18 +1,17 @@
 #===============================================================================
 # PyFudge: A Python-based Brainfuck Interpreter
 #-------------------------------------------------------------------------------
-# Version: 0.1.1
-# Updated: 05-11-2013
+# Version: 0.1.2
+# Updated: 06-11-2013
 # Author: Alex Crawford
 # License: MIT
+# Demo: http://repl.it/MOC
 #===============================================================================
 
-'''***THIS IS A WIP, AND NOT FULLY FUNCTIONAL.***
+'''PyFudge is a Python-based (2.7.5) Brainfuck interpreter.
 
-PyFudge is a Python-based (2.7.5) Brainfuck interpreter.
-
-At the moment it can interepret straightforward Brainfuck programs, but 
-can't handle nested loops properly, yet. Will work on that.
+I believe it's fully functional (nested loops and all), but haven't
+tested it thoroughly yet.
 
 '''
 
@@ -23,81 +22,74 @@ can't handle nested loops properly, yet. Will work on that.
 from __future__ import print_function
 
 #===============================================================================
-# THE BRAINFUCK INTERPRETER
+# MEMORY VARIABLES
 #===============================================================================
 
-class Pyfudge(object):
-    ''''''
+MEMSIZE = 30000
+BYTESIZE = 255
 
-    MEMORYSIZE = 30000
-    CELLSIZE = 255
-    MEMORY = []
+MEMORY = [0] * MEMSIZE
 
-    @classmethod
-    def interp(self, program):
-        ''''''
+#===============================================================================
+# PYFUDGE MAIN FUNCTION
+#===============================================================================
 
-        RUNNING = True
+def read(program, wrap=True):
+    '''pyfudge.read(program, wrap=True)
 
-        pointer = 0
-        progpos = 0
+    Interprets a Brainfuck program fed into it.
 
-        value = 0
+    '''
 
-        looping = False
-        loopstart = 0
+    pointer = 0
+    progpos = 0
 
-        memleft = self.MEMORYSIZE
-        while memleft > 0:
-            self.MEMORY.append(0)
-            memleft -= 1
-        del memleft
+    loopstack = []
 
-        program = program.replace(" ", "")
+    program = program.replace(" ", "")
 
-        while RUNNING:
-            try:
-                for char in program[progpos]:
-                    if char is '+':
-                        self.MEMORY[pointer] += 1
-                    elif char is '-':
-                        self.MEMORY[pointer] -= 1
-                    elif char is '>':
-                        if value > 0:
-                            self.MEMORY[pointer] += value
-                        pointer += 1
-                        value = 0
-                    elif char is '<':
-                        if value > 0:
-                            self.MEMORY[pointer] += value
-                        pointer -= 1
-                        value = 0
-                    elif char is '.':
-                        if self.MEMORY[pointer] > 0:
-                            print(chr(self.MEMORY[pointer]), end="")
-                        else:
-                            print(chr(self.MEMORY[pointer]), end="\n")
-                    elif char is ',':
-                        cmd  = int(raw_input())
-                        self.MEMORY[pointer] = cmd
-                    elif char is '[':
-                        loopstart = progpos
-                        looping = True
-                    elif char is ']':
-                        if looping:
-                            if self.MEMORY[pointer] > 0:
-                                progpos = loopstart
-                            if self.MEMORY[pointer] == 0:
-                                looping = False
-                    elif char  is '*':
-                        print(self.MEMORY[pointer], end=" ")
+    while True:
 
-                    if self.MEMORY[pointer] > self.CELLSIZE:
-                        self.MEMORY[pointer] = 0
-                    elif self.MEMORY[pointer] <= -1:
-                        self.MEMORY[pointer] = self.CELLSIZE
+        try:
 
-                    progpos += 1
+            for char in program[progpos]:
 
-            except:
-                break
+                if char is '+':
+                    MEMORY[pointer] += 1
+                elif char is '-':
+                    MEMORY[pointer] -= 1
+                elif char is '>':
+                    pointer += 1
+                elif char is '<':
+                    pointer -= 1
+                elif char is '.':
+                    if MEMORY[pointer] != 0:
+                        print(chr(MEMORY[pointer]), end="")
+                elif char is ',':
+                    MEMORY[pointer] = ord(raw_input())
+                elif char is '[':
+                    if MEMORY[pointer] == 0:
+                        while True:
+                            if program[progpos] is not ']':
+                                progpos += 1
+                            else:
+                                break
+                    loopstack.append(progpos - 1)
+                elif char is ']':
+                    if MEMORY[pointer] != 0:
+                        progpos = loopstack[-1]
+                    loopstack.pop(-1)
+                elif char  is '#':
+                    print(MEMORY[pointer])
+
+                if wrap:
+                    if MEMORY[pointer] > BYTESIZE:
+                        MEMORY[pointer] = 0
+                    elif MEMORY[pointer] < 0:
+                        MEMORY[pointer] = BYTESIZE
+
+                progpos += 1
+
+        except:
+
+            break
