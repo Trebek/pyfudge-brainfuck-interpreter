@@ -5,7 +5,6 @@
 # Updated: 07-11-2013
 # Author: Alex Crawford
 # License: MIT
-# Demo: http://repl.it/MOC
 #===============================================================================
 
 '''PyFudge is a Python-based (2.7.5) Brainfuck interpreter.
