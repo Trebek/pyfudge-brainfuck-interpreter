@@ -3,6 +3,8 @@ PyFudge: Python Brainfuck Interpreter
 
 A Brainfuck interpreter written in Python (2.7.5). Not fully functional at the moment. Seems to only work with very simple programs at the moment. It's a work in progress.
 
+**[See a demo.](http://repl.it/MO5)**
+
 **Features:**
 
   - 30000 byte memory (easily modified).
