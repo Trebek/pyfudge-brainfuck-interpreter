@@ -1,16 +1,14 @@
 PyFudge: Python Brainfuck Interpreter
 =============================
 
-A Brainfuck interpreter written in Python (2.7.5). I think it's fully functional (nested loops and all), but haven't really tried any complex BF programs with it yet. The code may be more complex than it needs to be, but it works.
+A Brainfuck interpreter written in Python (2.7.5). Not fully functional at the moment. Seems to only work with very simple programs at the moment. It's a work in progress.
 
 **Features:**
 
   - 30000 byte memory (easily modified).
   - 8-bits per byte (easily modified).
   - Byte wrapping (can be disabled). 
-  - Works with nested loops.
   - Accepts code with, or without spaces between symbols.
-  - Code written with readability in mind.
 
 **Relevant links:**  
 
