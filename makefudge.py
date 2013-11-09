@@ -1,18 +1,20 @@
 #===============================================================================
-# MakeFudge: PyFudge Brainfuck Output Script
+# MakeFudge: PyFudge Brainfuck Control Script
 #-------------------------------------------------------------------------------
-# Version: 0.1.1
-# Updated: 05-11-2013
+# Version: 0.1.4
+# Updated: 08-11-2013
 # Author: Alex Crawford
 # License: MIT
 #===============================================================================
 
-'''A very simple script for outputting the results of running a Brainfuck
-program.
+'''***REQUIRES PYFUDGE***
 
-Just place Pyfudge, and your Brainfuck programs (with a '.bf' extension) 
-in the same directory as this script, and it should be listed for loading 
-when you run the script.
+A script that displays the output of a Brainfuck program, and allows 
+the user to toggle/change the settings of PyFudge.
+
+Just place PyFudge (as 'pyfudge.py'), and your Brainfuck programs 
+(with a '.b' or '.bf' extension) in the same directory as this script, 
+and the BF programs should be listed for loading when you run this script.
 
 '''
 
@@ -21,69 +23,244 @@ when you run the script.
 #===============================================================================
 
 from __future__ import print_function
-
+import os
 import glob
-
-from pyfudge import Pyfudge
-
-#===============================================================================
-# CONSTANTS
-#===============================================================================
-
-HR = ("*" * 79)
-NL = ("\n")
+import pyfudge
 
 #===============================================================================
-# FUDGE MAKER
+# MISC. FORMATTING VARIABLES
 #===============================================================================
 
-class Makefudge(object):
+HR = '*' * 79
+NL = '\n'
+
+#===============================================================================
+# MENU CLASS
+#===============================================================================
+
+class Menu(object):
+    ''''''
+
+    program = None
+    progname = None
+
+    memsize = pyfudge.MEMSIZE
+    cellsize = pyfudge.CELLSIZE
+    bytewrap = True
+    binmode = False
+    debugmode = False
+    bytenum = 32
+
+    @classmethod
+    def main(self):
+        ''''''
+
+        Display.osclear()
+
+        opts = [
+            'Load program',
+            'Run program',
+            'Settings',
+            'Exit'
+        ]
+
+        index = 1
+
+        Display.title('Main Menu')
+
+        Display.numlist(opts) 
+
+        if self.progname is not None:
+            print(HR + NL)
+            print('Program: ' + self.progname + NL)
+
+        print(HR + NL)
+
+        cmd = raw_input('Choice: ')
+        print()
+
+        if cmd is '1':
+            self.loadprog()
+        elif cmd is '2':
+            Display.output(self.program, memlen=self.bytenum)
+        elif cmd is '3':
+            self.settings()
+        elif cmd is '4' or cmd is '':
+            pass
+
+    @classmethod
+    def loadprog(self):
+        ''''''
+
+        Display.osclear()
+
+        filetypes = ['*.b', '*.bf']
+
+        filelist = []
+
+        Display.title('Load Program')
+
+        for ftype in filetypes:
+            filelist.extend(glob.glob(ftype))
+
+        Display.numlist(filelist)
+
+        print(HR + NL)
+
+        cmd = int(raw_input('Choice: '))
+        print()
+
+        with open(filelist[cmd-1], 'r') as afile:
+
+            self.program = afile.read()
+            self.progname = filelist[cmd-1]
+
+        self.main()
+
+    @classmethod
+    def settings(self):
+        ''''''
+
+        Display.osclear()
+
+        opts = [
+            'Set memory size',
+            'Set cell size',
+            'Toggle byte wrapping',
+            'Toggle binary mode',
+            'Toggle debug mode',
+            'Change byte display size',
+            'Back'
+        ]
+
+        Display.title('Settings')
+
+        Display.numlist(opts)
+
+        print(HR + NL)
+
+        dispopts = [
+            ['Memory size: ', str(pyfudge.MEMSIZE)],
+            ['Cell size: ', str(pyfudge.CELLSIZE)],
+            ['Byte wrapping: ', str(self.bytewrap)],
+            ['Binary mode: ', str(self.binmode)],
+            ['Debug mode: ', str(self.debugmode)],
+            ['Bytes to display: ', str(self.bytenum)]
+        ]
+
+        for item in dispopts:
+            print(item[0] + item[1])
+        print()
+
+        print(HR + NL)
+
+        cmd = raw_input('Choice: ')
+        print()
+
+        if cmd is '1':
+            size = raw_input('Memory size: ')
+            if size in ['a','A','auto','Auto']:
+                pyfudge.setmemory(memsize='Auto')
+            else:
+                pyfudge.setmemory(memsize=int(size))
+            self.settings()
+        if cmd is '2':
+            pass
+        if cmd is '3':
+            if self.bytewrap:
+                self.bytewrap = False
+            else:
+                self.bytewrap = True
+            self.settings()
+        elif cmd is '4':
+            if self.binmode:
+                self.binmode = False
+            else:
+                self.binmode = True
+            self.settings()
+        elif cmd is '5':
+            if self.debugmode:
+                self.debugmode = False
+            else:
+                self.debugmode = True
+            self.settings()
+        elif cmd is '6':
+            self.bytenum = int(raw_input('Number of bytes: '))
+            self.settings()
+        elif cmd is '7' or cmd is '':
+            self.main()
+
+#===============================================================================
+# DISPLAY CLASS
+#===============================================================================
+
+class Display(object):
     ''''''
 
     @classmethod
-    def make(self, program, memlen=100):
+    def output(self, program, memlen=32):
         ''''''
+    
+        self.osclear()
 
-        self.title('Output')
+        out = pyfudge.run(program, wrap=Menu.bytewrap, binary=Menu.binmode)
 
-        Pyfudge.interp(program)
-        print(NL)
+        if out[0] is not '':
+            self.title('Output')
+
+            print(out[0] + NL)
+            # print()
 
         self.title('Memory')
 
         if memlen is 'all':
-            print(Pyfudge.MEMORY)
+            print(pyfudge.MEMORY)
         else:
-            print(Pyfudge.MEMORY[0:memlen])
+            print(pyfudge.MEMORY[0:memlen])
 
     @staticmethod
-    def title (*args):
+    def title (title='', subtitle='', upcase=True):
         ''''''
         
-        argl = len(args)
+        # argl = len(args)
 
         print(HR)
-        if argl == 1:
-            print(args[0])
-        elif argl == 2:
-            print(args[0] + " (" + args[1] + ")")
+        if not upcase:
+            print(title)
+        else:
+            print(title.upper())
+
+        if subtitle is not '':
+            print(subtitle)
         print(HR + NL)
 
     @staticmethod
-    def numlist (thelist, upper=False):
-        """"""
+    def numlist (thelist=[], num=True, upcase=False):
+        ''''''
 
         index = 1
 
-        if not upper:
-          for item in thelist:
-              print("[{0}] {1}".format(index, item))
-              index += 1
-        elif upper:
-          for item in thelist:
-              print("[{0}] {1}".format(index, item.upper()))
-              index += 1
+        for item in thelist:
+            if num and upcase:
+                print("{0}. {1}".format(index, item.upper()))
+            elif num and not upcase:
+                print("{0}. {1}".format(index, item))
+            elif not num and upcase:
+                print(item.upper())
+            elif not num and not upcase:
+                print(item)
+            index += 1
+
         print()
+
+    @staticmethod
+    def osclear():
+        ''''''
+
+        if os.name in ['nt', 'dos']:
+            os.system('cls')
+        elif os.name is 'posix':
+            os.system('clear')
 
 #===============================================================================
 # IF MAIN
@@ -91,16 +268,5 @@ class Makefudge(object):
 
 if __name__ == '__main__':
 
-    print()
+    Menu.main()
 
-    filelist = glob.glob("*.bf")
-
-    Makefudge.numlist(filelist)
-
-    cmd = int(raw_input('Load which program? '))
-
-    afile = open(filelist[cmd-1], 'r')
-
-    program = afile.read()
-
-    Makefudge.make(program)
