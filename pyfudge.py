@@ -1,11 +1,10 @@
 #===============================================================================
 # PyFudge: A Python-based Brainfuck Interpreter
 #-------------------------------------------------------------------------------
-# Version: 0.1.4
-# Updated: 08-11-2013
+# Version: 0.1.5
+# Updated: 10-11-2013
 # Author: Alex Crawford
 # License: MIT
-# Demo: http://repl.it/MQz/1
 #===============================================================================
 
 '''PyFudge is a Python-based (2.7.5) Brainfuck interpreter.
@@ -19,6 +18,7 @@ I believe it's fully functional, but haven't tested it thoroughly yet.
 #===============================================================================
 
 from __future__ import print_function
+import sys
 
 #===============================================================================
 # MEMORY VARIABLES
@@ -31,6 +31,30 @@ MEMORY = [0]
 #===============================================================================
 # PYFUDGE FUNCTIONS
 #===============================================================================
+
+def main():
+    '''The main function.'''
+
+    if len(sys.argv) == 2:
+
+        with open(sys.argv[1], 'r') as prog:
+            program = prog.read()
+        output = run(program)
+
+        print()
+        print('Done interpreting ' + sys.argv[1])
+        print()
+        # print('See \"output.txt\" and \"memory.txt\" for results.')
+
+        if len(output[0]) != 0:
+            with open('output.txt', 'w') as outfile:
+                outfile.write(output[0])
+                print('See \"output.txt\" for output results.')
+
+        with open('memory.txt', 'w') as memfile:
+            memfile.write(str(MEMORY))
+        print('See \"memory.txt\" for memory dump.')
+
 
 def run(program, wrap=True, binary=False, debug=False):
     '''pyfudge.run(program, wrap=True, binary=False, debug=False)
@@ -50,12 +74,10 @@ def run(program, wrap=True, binary=False, debug=False):
     looplst = findloops(program, proglen)
     looplen = program.count('[')
 
-    if 'ERROR' in looplst[0]:
-        return looplst
-
     while progpos < proglen:
 
         char = program[progpos]
+        memlen = len(MEMORY)
 
         if char is '+':
             MEMORY[mempos] += 1
@@ -72,34 +94,23 @@ def run(program, wrap=True, binary=False, debug=False):
                 outbuff.extend(chr(MEMORY[mempos]))
         elif char is ',':
             cmd = raw_input()
-            if cmd is not '':
+            if len(cmd) != 0:
                 MEMORY[mempos] = ord(cmd)
-            else:
-                MEMORY[mempos] = 0
+            elif len(cmd) == 0:
+                break
         elif char is '[':
             if MEMORY[mempos] == 0:
-                for i in range(looplen):
-                    if progpos == looplst[i][0]:
-                        progpos = looplst[i][1]
+                progpos = doloops(progpos, char, looplst, looplen)
         elif char is ']':
             if MEMORY[mempos] != 0:
-                for i in range(looplen):
-                    if progpos == looplst[i][1]:
-                        progpos = looplst[i][0]
+                progpos = doloops(progpos, char, looplst, looplen)
         elif char is '#' and debug:
             print(MEMORY[mempos])
 
-        if MEMSIZE is 'Auto':
-            try:
-                test = MEMORY[mempos]
-            except:
+        if MEMSIZE is 'Auto' and mempos == memlen:
                 MEMORY.extend([0])
-        else:
-            try:
-                test = MEMORY[mempos]
-            except:
-                return ['ERROR: Not enough memory.']
-
+        elif mempos == memlen:
+                raise Error('Not enough memory.')
         if wrap:
             if MEMORY[mempos] > CELLSIZE:
                 MEMORY[mempos] = 0
@@ -111,7 +122,9 @@ def run(program, wrap=True, binary=False, debug=False):
     return "".join(outbuff), MEMORY 
 
 def findloops(program, proglen):
-    '''findloops(program, proglen) -> list of loop jump points'''
+    '''findloops(program, proglen) -> list of loop jump points
+
+    '''
 
     temp = []
     looplst = []
@@ -125,7 +138,19 @@ def findloops(program, proglen):
                 looplst.append([index, i])
         return looplst
     else:
-        return ['ERROR: Mismatched number of loop brackets.']
+        raise Error('Mismatched number of loop brackets.')
+
+def doloops(progpos, char, looplst, looplen):
+    '''doloops(progpos, char, looplst, looplen) -> next loop position'''
+
+    if char is '[':
+        x, y = 0, 1
+    elif char is ']':
+        x, y = 1, 0
+
+    for i in range(looplen):
+        if progpos == looplst[i][x]:
+            return looplst[i][y]
 
 def setmemory(memsize='Auto', cellsize=None):
     '''setmemory(memsize='Auto', cellsize=None)
@@ -147,3 +172,17 @@ def setmemory(memsize='Auto', cellsize=None):
     if cellsize is not None:
         CELLSIZE = cellsize
 
+class Error(Exception):
+    ''''''
+
+    def __init__(self, message):
+
+        Exception.__init__(self, message)
+
+#===============================================================================
+# IF MAIN
+#===============================================================================
+
+if __name__ == '__main__':
+
+    main()

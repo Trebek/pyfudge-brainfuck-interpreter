@@ -1,8 +1,8 @@
 #===============================================================================
 # MakeFudge: PyFudge Brainfuck Control Script
 #-------------------------------------------------------------------------------
-# Version: 0.1.4
-# Updated: 08-11-2013
+# Version: 0.1.5
+# Updated: 10-11-2013
 # Author: Alex Crawford
 # License: MIT
 #===============================================================================
@@ -40,29 +40,34 @@ NL = '\n'
 
 class Menu(object):
     ''''''
-
     program = None
     progname = None
 
     memsize = pyfudge.MEMSIZE
     cellsize = pyfudge.CELLSIZE
-    bytewrap = True
+    cellwrap = True
     binmode = False
     debugmode = False
-    bytenum = 32
+    memdisp = 0
 
     @classmethod
     def main(self):
         ''''''
-
         Display.osclear()
 
-        opts = [
+        if self.progname is None:
+            opts = [
             'Load program',
-            'Run program',
             'Settings',
             'Exit'
-        ]
+            ]
+        else:
+            opts = [
+            'Load program',
+            'Run ' + self.progname,
+            'Settings',
+            'Exit'
+            ]
 
         index = 1
 
@@ -70,28 +75,31 @@ class Menu(object):
 
         Display.numlist(opts) 
 
-        if self.progname is not None:
-            print(HR + NL)
-            print('Program: ' + self.progname + NL)
-
-        print(HR + NL)
-
+        print(HR)
+        
         cmd = raw_input('Choice: ')
         print()
 
-        if cmd is '1':
-            self.loadprog()
-        elif cmd is '2':
-            Display.output(self.program, memlen=self.bytenum)
-        elif cmd is '3':
-            self.settings()
-        elif cmd is '4' or cmd is '':
-            pass
+        if self.progname is None:
+            if cmd is '1':
+                self.loadprog()
+            elif cmd is '2':
+                self.settings()
+            elif cmd is '3' or cmd is '':
+                return
+        else:
+            if cmd is '1':
+                self.loadprog()
+            elif cmd is '2':
+                Display.output(self.program, self.memdisp)
+            elif cmd is '3':
+                self.settings()
+            elif cmd is '4' or cmd is '':
+                return
 
     @classmethod
     def loadprog(self):
         ''''''
-
         Display.osclear()
 
         filetypes = ['*.b', '*.bf']
@@ -105,7 +113,7 @@ class Menu(object):
 
         Display.numlist(filelist)
 
-        print(HR + NL)
+        print(HR)
 
         cmd = int(raw_input('Choice: '))
         print()
@@ -120,16 +128,18 @@ class Menu(object):
     @classmethod
     def settings(self):
         ''''''
+        global pyfudge
+        global options
 
         Display.osclear()
 
         opts = [
-            'Set memory size',
-            'Set cell size',
-            'Toggle byte wrapping',
-            'Toggle binary mode',
-            'Toggle debug mode',
-            'Change byte display size',
+            'Set memory size ' + '(' + str(pyfudge.MEMSIZE) + ')',
+            'Set cell size ' + '(' + str(pyfudge.CELLSIZE) + ')',
+            'Toggle byte wrapping ' + '(' + str(self.cellwrap) + ')',
+            'Toggle binary mode ' + '(' + str(self.binmode) + ')',
+            'Toggle debug mode ' + '(' + str(self.debugmode) + ')',
+            'Change byte display size ' + '(' + str(self.memdisp) + ')',
             'Back'
         ]
 
@@ -137,22 +147,7 @@ class Menu(object):
 
         Display.numlist(opts)
 
-        print(HR + NL)
-
-        dispopts = [
-            ['Memory size: ', str(pyfudge.MEMSIZE)],
-            ['Cell size: ', str(pyfudge.CELLSIZE)],
-            ['Byte wrapping: ', str(self.bytewrap)],
-            ['Binary mode: ', str(self.binmode)],
-            ['Debug mode: ', str(self.debugmode)],
-            ['Bytes to display: ', str(self.bytenum)]
-        ]
-
-        for item in dispopts:
-            print(item[0] + item[1])
-        print()
-
-        print(HR + NL)
+        print(HR)
 
         cmd = raw_input('Choice: ')
         print()
@@ -167,10 +162,10 @@ class Menu(object):
         if cmd is '2':
             pass
         if cmd is '3':
-            if self.bytewrap:
-                self.bytewrap = False
+            if self.cellwrap:
+                self.cellwrap = False
             else:
-                self.bytewrap = True
+                self.cellwrap = True
             self.settings()
         elif cmd is '4':
             if self.binmode:
@@ -185,7 +180,7 @@ class Menu(object):
                 self.debugmode = True
             self.settings()
         elif cmd is '6':
-            self.bytenum = int(raw_input('Number of bytes: '))
+            self.memdisp = int(raw_input('Number of bytes: '))
             self.settings()
         elif cmd is '7' or cmd is '':
             self.main()
@@ -198,46 +193,54 @@ class Display(object):
     ''''''
 
     @classmethod
-    def output(self, program, memlen=32):
+    def output(self, program, memdisp=Menu.memdisp):
         ''''''
-    
         self.osclear()
 
-        out = pyfudge.run(program, wrap=Menu.bytewrap, binary=Menu.binmode)
+        out = pyfudge.run(program, wrap=Menu.cellwrap, binary=Menu.binmode)
 
-        if out[0] is not '':
-            self.title('Output')
+        print('Done. Press enter to continue.')
+        raw_input()
+
+        self.osclear()
+
+        if len(out[0]) is not 0:
+            self.title('Output', newline=True)
 
             print(out[0] + NL)
-            # print()
 
-        self.title('Memory')
+            with open('output.txt', 'w') as outfile:
+                outfile.write(out[0])
 
-        if memlen is 'all':
-            print(pyfudge.MEMORY)
-        else:
-            print(pyfudge.MEMORY[0:memlen])
+        if memdisp is not 0:
+            self.title('Memory', newline=True)
+            if memdisp is 'all':
+                print(pyfudge.MEMORY)
+            else:
+                print(pyfudge.MEMORY[0:memdisp])
+
+        with open('memory.txt', 'w') as memfile:
+            memfile.write(str(pyfudge.MEMORY))
 
     @staticmethod
-    def title (title='', subtitle='', upcase=True):
+    def title (title='', subtitle=None, upcase=True, newline=False):
         ''''''
-        
-        # argl = len(args)
-
         print(HR)
         if not upcase:
             print(title)
         else:
             print(title.upper())
 
-        if subtitle is not '':
+        if subtitle is not None:
             print(subtitle)
-        print(HR + NL)
+        print(HR)
+
+        if newline:
+            print()
 
     @staticmethod
     def numlist (thelist=[], num=True, upcase=False):
         ''''''
-
         index = 1
 
         for item in thelist:
@@ -251,22 +254,26 @@ class Display(object):
                 print(item)
             index += 1
 
-        print()
+        # print()
 
     @staticmethod
     def osclear():
         ''''''
-
         if os.name in ['nt', 'dos']:
             os.system('cls')
         elif os.name is 'posix':
             os.system('clear')
+
+    @staticmethod
+    def bracket(text):
+        ''''''
+        return '{0}{1}{2}'.format('(', text, ')')
 
 #===============================================================================
 # IF MAIN
 #===============================================================================
 
 if __name__ == '__main__':
-
+    
     Menu.main()
 
