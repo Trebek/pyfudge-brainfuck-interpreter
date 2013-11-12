@@ -5,7 +5,7 @@ A Brainfuck interpreter written in Python (2.7.5).
 
 Seems to be fully functional now. Can't say I've thoroughly tested it though. Seems to work with the programs I've fed into it.
 
-**[See a demo.](http://repl.it/MQz/2)**
+**[See a demo.](http://repl.it/MQz/3)**
 
 **Features:**
 
