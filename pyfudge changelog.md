@@ -1,6 +1,11 @@
 PyFudge Changelog
 =============================
 
+#### v0.1.6
+
+- Created a Pyfudge class, and collected all of the main functions, memory variables, etc. in there.
+- PyFudge now uses the BFCC (Brainfuck Code Cleaner) script if it's available. Runs slightly faster overall when using BFCC over the default str.replace call, which only removes spaces at the moment.
+
 #### v0.1.5
 
 - Can now run PyFudge from the command line.

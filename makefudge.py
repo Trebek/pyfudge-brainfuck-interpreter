@@ -1,21 +1,21 @@
 #===============================================================================
 # MakeFudge: PyFudge Brainfuck Control Script
 #-------------------------------------------------------------------------------
-# Version: 0.1.5
-# Updated: 10-11-2013
+# Version: 0.1.6
+# Updated: 11-11-2013
 # Author: Alex Crawford
 # License: MIT
 #===============================================================================
 
 '''***REQUIRES PYFUDGE***
 
-A script that displays the output of a Brainfuck program, and allows 
-the user to toggle/change the settings of PyFudge.
+A script that displays the output of a Brainfuck program, and allows the 
+user to toggle/change the settings of PyFudge. Also dumps the output, and
+memory to two separate txt files ('output.txt', and 'memory.txt').
 
-Just place PyFudge (as 'pyfudge.py'), and your Brainfuck programs 
-(with a '.b' or '.bf' extension) in the same directory as this script, 
-and the BF programs should be listed for loading when you run this script.
-
+Just place PyFudge (as 'pyfudge.py'), and your Brainfuck programs (with a 
+'.b' or '.bf' extension) in the same directory as this script, and the BF 
+programs should be listed for loading when you run this script.
 '''
 
 #===============================================================================
@@ -25,7 +25,7 @@ and the BF programs should be listed for loading when you run this script.
 from __future__ import print_function
 import os
 import glob
-import pyfudge
+from pyfudge import Pyfudge
 
 #===============================================================================
 # MISC. FORMATTING VARIABLES
@@ -43,8 +43,8 @@ class Menu(object):
     program = None
     progname = None
 
-    memsize = pyfudge.MEMSIZE
-    cellsize = pyfudge.CELLSIZE
+    memsize = Pyfudge.memsize
+    cellsize = Pyfudge.cellsize
     cellwrap = True
     binmode = False
     debugmode = False
@@ -128,14 +128,14 @@ class Menu(object):
     @classmethod
     def settings(self):
         ''''''
-        global pyfudge
-        global options
+        # global pyfudge
+        # global options
 
         Display.osclear()
 
         opts = [
-            'Set memory size ' + '(' + str(pyfudge.MEMSIZE) + ')',
-            'Set cell size ' + '(' + str(pyfudge.CELLSIZE) + ')',
+            'Set memory size ' + '(' + str(Pyfudge.memsize) + ')',
+            'Set cell size ' + '(' + str(Pyfudge.cellsize) + ')',
             'Toggle byte wrapping ' + '(' + str(self.cellwrap) + ')',
             'Toggle binary mode ' + '(' + str(self.binmode) + ')',
             'Toggle debug mode ' + '(' + str(self.debugmode) + ')',
@@ -155,9 +155,9 @@ class Menu(object):
         if cmd is '1':
             size = raw_input('Memory size: ')
             if size in ['a','A','auto','Auto']:
-                pyfudge.setmemory(memsize='Auto')
+                Pyfudge.setmemory(memsize='auto')
             else:
-                pyfudge.setmemory(memsize=int(size))
+                Pyfudge.setmemory(memsize=int(size))
             self.settings()
         if cmd is '2':
             pass
@@ -197,7 +197,7 @@ class Display(object):
         ''''''
         self.osclear()
 
-        out = pyfudge.run(program, wrap=Menu.cellwrap, binary=Menu.binmode)
+        out = Pyfudge(program).run(wrap=Menu.cellwrap, binary=Menu.binmode)
 
         print('Done. Press enter to continue.')
         raw_input()
@@ -215,12 +215,12 @@ class Display(object):
         if memdisp is not 0:
             self.title('Memory', newline=True)
             if memdisp is 'all':
-                print(pyfudge.MEMORY)
+                print(str(Pyfudge.memory) + NL)
             else:
-                print(pyfudge.MEMORY[0:memdisp])
+                print(str(Pyfudge.memory[0:memdisp]) + NL)
 
         with open('memory.txt', 'w') as memfile:
-            memfile.write(str(pyfudge.MEMORY))
+            memfile.write(str(Pyfudge.memory))
 
     @staticmethod
     def title (title='', subtitle=None, upcase=True, newline=False):
@@ -274,6 +274,5 @@ class Display(object):
 #===============================================================================
 
 if __name__ == '__main__':
-    
-    Menu.main()
+        Menu.main()
 
